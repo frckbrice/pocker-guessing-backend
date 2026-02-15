@@ -13,11 +13,41 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const corsOrigins = configService.get<string>('CORS_ORIGIN');
   const corsOriginList = corsOrigins
-    ? corsOrigins.split(',').map((origin) => origin.trim()).filter(Boolean)
+    ? corsOrigins
+      .split(',')
+      .map((origin) => origin.trim().replace(/\/$/, ''))
+      .filter(Boolean)
     : ['http://localhost:3000'];
 
+  const isOriginAllowed = (requestOrigin?: string) => {
+    if (!requestOrigin) {
+      return true;
+    }
+
+    const normalizedOrigin = requestOrigin.replace(/\/$/, '');
+
+    return corsOriginList.some((allowedOrigin) => {
+      if (allowedOrigin.startsWith('*.')) {
+        const wildcardBase = allowedOrigin.slice(2);
+        return (
+          normalizedOrigin === `https://${wildcardBase}` ||
+          normalizedOrigin.endsWith(`.${wildcardBase}`)
+        );
+      }
+
+      return normalizedOrigin === allowedOrigin;
+    });
+  };
+
   app.enableCors({
-    origin: corsOriginList,
+    origin: (origin, callback) => {
+      if (isOriginAllowed(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type,Authorization',
