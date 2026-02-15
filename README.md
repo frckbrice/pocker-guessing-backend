@@ -1,6 +1,6 @@
 # PockerPlay Backend
 
-Backend API and realtime server for PockerPlay, a 2-player guessing game.
+Backend REST API and realtime server for PockerPlay, a 2-player guessing game. The API serves data to client app in realtime wia Websockets. the Game is still in WIP (work in progress)
 
 ## Objectives
 
